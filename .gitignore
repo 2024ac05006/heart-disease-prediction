@@ -1,0 +1,32 @@
+# Environments
+.env
+.venv
+env/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# MLflow tracking
+mlruns/
+notebooks/.github/
+notebooks/.pytest_cache/
+notebooks/mlflow_artifacts/
+notebooks/mlruns/
+notebooks/tests/
+notebooks/app.py
+notebooks/deployment.yaml
+notebooks/Dockerfile
+notebooks/heart_disease_pipeline.pkl
+notebooks/mlruns.db
+notebooks/prometheus.yml
+notebooks/requirements.txt
+notebooks/service.yaml
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS generated files
+.DS_Store
+Thumbs.db

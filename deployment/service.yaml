@@ -1,0 +1,13 @@
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: heart-disease-api-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: heart-disease-api
+  ports:
+  - protocol: TCP
+    port: 8080          # The port exposed to your Windows browser
+    targetPort: 8000    # The port Uvicorn is listening on inside the container

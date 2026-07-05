@@ -1,0 +1,12 @@
+pandas
+scikit-learn==1.6.1
+matplotlib
+seaborn
+mlflow
+joblib
+ucimlrepo
+fastapi
+uvicorn
+pytest
+prometheus-fastapi-instrumentator
+prometheus-client
