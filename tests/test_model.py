@@ -31,11 +31,12 @@ def test_data_processing(sample_data):
 
 def test_model_inference(sample_data):
     # Check if the model file exists
-    model_path = 'heart_disease_pipeline.pkl'
-    assert os.path.exists(model_path), f"Model file {model_path} not found."
+    BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    MODEL_PATH = os.path.join(BASE_DIR, 'models', 'heart_disease_pipeline.pkl')    
+    assert os.path.exists(MODEL_PATH), f"Model file {MODEL_PATH} not found."
     
     # Load model and test prediction
-    model = joblib.load(model_path)
+    model = joblib.load(MODEL_PATH)
     predictions = model.predict(sample_data)
     
     # Assertions
