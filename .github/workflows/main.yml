@@ -48,4 +48,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: trained-model
-        path: heart_disease_pipeline.pkl
+        path: models/heart_disease_pipeline.pkl
