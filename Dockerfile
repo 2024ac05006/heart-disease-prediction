@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the application code and the trained model
 COPY src/app.py .
-COPY models/heart_disease_pipeline.pkl .
+COPY models/heart_disease_prediction_logistic_regression.pkl .
 
 # Expose port 8000 for FastAPI
 EXPOSE 8000

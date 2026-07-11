@@ -20,7 +20,7 @@ AGE_HISTOGRAM = Histogram("patient_age_distribution", "Distribution of patient a
 CONFIDENCE_HISTOGRAM = Histogram("model_confidence_score", "Distribution of prediction confidence")
 
 try:
-    model = joblib.load("heart_disease_pipeline.pkl")
+    model = joblib.load("heart_disease_prediction_logistic_regression.pkl")
     logger.info("Model loaded successfully.")
 except Exception as e:
     logger.error(f"Failed to load model: {e}")
