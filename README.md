@@ -8,12 +8,12 @@ An end-to-end machine learning pipeline and REST API for predicting heart diseas
 heart-disease-prediction/
 ├── .github/workflows/main.yml       # CI/CD Pipeline
 ├── data/                            # Dataset and download scripts
-├── deployment/                      # Kubernetes manifests (deployment, service)
-├── models/                          # Serialized ML pipeline (.pkl)
+├── deployment/                      # Kubernetes manifests (deployment, service), prometheus and grafna manifests
+├── models/                          # Serialized ML models (.pkl)
 ├── notebooks/                       # EDA and Training notebooks
 ├── src/                             # FastAPI application and Prometheus config
 ├── test/                            # Pytest unit tests
-├── screenshots/                     # Architecture and dashboard proofs
+├── screenshots/                     # Screenshots for Docker, Kubernetes, Prometheus, Grafana, Swagger, MLFlow
 ├── Dockerfile                       # Container definition
 ├── requirements.txt                 # Python dependencies
 └── Final_Report.pdf                 # Detailed project documentation
@@ -33,87 +33,128 @@ Ensure you have the following installed and running on your machine:
 
 ## Step-by-Step Reproduction Guide
 
-### Step 1: Clone the Repository
-
-Clone this repository to your local machine and navigate into the project directory:
+### Step 1: Clone Repository and Initialize Virtual Environment
 
 ```bash
-git clone <YOUR_GITHUB_REPO_URL>
+git clone https://github.com/2024ac05006/heart-disease-prediction.git
 cd heart-disease-prediction
 
-```
-
-### Step 2: Local Environment Setup
-
-To run the Jupyter notebooks or local tests, set up a virtual environment:
-
-```bash
 python -m venv venv
-# On Windows:
-venv\Scripts\activate
-# On Mac/Linux:
+
+# Linux/macOS
 source venv/bin/activate
 
-pip install -r requirements.txt
+# Windows
+venv\Scripts\activate
 
+pip install -r requirements.txt
 ```
 
-### Step 3: Build the Docker Image
+---
 
-Build the isolated environment for the FastAPI application. This step proves the model serves correctly in an isolated container.
+### Step 2: Download Dataset and Run Tests
 
 ```bash
-docker build -t heart-disease-api .
-
+python data/download_data.py
+pytest tests/
 ```
 
-### Step 4: Deploy to Kubernetes
+---
 
-Deploy the containerized application and expose it via a LoadBalancer service to ensure stable routing on local machines.
-*(Note: Make sure to enable Kubernets in Docker Desktop: Click on Gear icon, go to Kubernets and enable it. Click on Apply.).*
+### Step 3: Deploy FastAPI Application to Kubernetes
 
-Run this command to force Kubernetes to use Docker Desktop:
+#### Build Docker Image
+
+```bash
+docker build -t heart-disease-api:latest .
+```
+
+#### Configure Kubernetes Context
+
 ```bash
 kubectl config use-context docker-desktop
 ```
-Apply the deployment and service configuration:
+
+#### Deploy Application
+
 ```bash
 kubectl apply -f deployment/deployment.yaml
 kubectl apply -f deployment/service.yaml
 ```
 
-*(Note: Wait about 15-30 seconds for the pods to initialize and the LoadBalancer to assign an IP).*
-
-### Step 5: Launch the Observability Stack
-
-Start Prometheus (for metrics scraping) and Grafana (for visualization) using Docker. Ensure you run this from the root directory so the path to `src/prometheus.yml` resolves correctly.
-
-**Start Prometheus:**
+#### Verify Deployment
 
 ```bash
-docker run -d --name prometheus -p 9090:9090 -v ${PWD}/src/prometheus.yml:/etc/prometheus/prometheus.yml prom/prometheus
-
-```
-
-**Start Grafana:**
-
-```bash
-docker run -d --name grafana -p 3000:3000 grafana/grafana
-
+kubectl get pods
 ```
 
 ---
 
-## Accessing the System
+### Step 4: Deploy Prometheus
 
-Once all services are running, you can access the different components of the architecture via your web browser:
+Execute the following commands to configure cluster permissions, deploy Prometheus, and expose the Prometheus Expression Browser.
 
-1. **FastAPI Swagger UI (Testing the Model):** [http://localhost:8080/docs](https://www.google.com/search?q=http://localhost:8080/docs)
-*Use this interface to send test JSON payloads and receive heart disease predictions.*
-2. **Raw API Metrics:** [http://localhost:8080/metrics](https://www.google.com/search?q=http://localhost:8080/metrics)
-3. **Prometheus Server:** [http://localhost:9090](https://www.google.com/search?q=http://localhost:9090)
-4. **Grafana Dashboards:** [http://localhost:3000](https://www.google.com/search?q=http://localhost:3000)
-*(Default login: admin / admin). Configure Prometheus as a data source using `http://host.docker.internal:9090` and build dashboards to track API Latency, Data Drift, and Model Health.*
+#### 1. Apply Cluster Role and Service Account Permissions
+
+```bash
+kubectl apply -f prometheus-roles.yaml
+```
+
+#### 2. Deploy the Prometheus ConfigMap
+
+```bash
+kubectl apply -f prometheus-config.yaml
+```
+
+#### 3. Deploy Prometheus Components
+
+```bash
+kubectl apply -f prometheus-deployment.yaml
+```
+
+#### 4. Access Prometheus Locally
+
+```bash
+kubectl port-forward svc/prometheus-service 9090:9090
+```
+
+Prometheus will be available at:
+
+```
+http://localhost:9090
+```
+
+---
+
+### Step 5: Deploy Grafana
+
+Execute the following commands to deploy Grafana, expose the service, and access the dashboard.
+
+#### 1. Deploy the Grafana Application
+
+```bash
+kubectl apply -f grafana-deployment.yaml
+```
+
+#### 2. Expose the Grafana Service
+
+```bash
+kubectl apply -f grafana-service.yaml
+```
+
+#### 3. Access Grafana Locally
+
+```bash
+kubectl port-forward svc/grafana-service 3000:3000
+```
+
+Grafana Dashboard will be available at:
+
+```
+http://localhost:3000
+```
+
+---
 
 ### Experiment Tracking (MLflow)
 This project uses MLflow to track model hyperparameters, metrics (Accuracy, F1-Score), and artifacts during the training phase. 
@@ -124,15 +165,15 @@ To view the experiment tracking dashboard locally:
    ```bash
    mlflow ui
 
-Open your browser and navigate to: http://127.0.0.1:5000
+Open your browser and navigate to: http://localhost:5000/
 
 ---
 
-## Cleanup and Teardown
+## Cleanup
 
 To stop all services and clean up your local environment, run the following commands:
 
-**Delete Kubernetes resources:**
+**heart-disease-api service cleanup:**
 
 ```bash
 kubectl delete -f deployment/service.yaml
@@ -140,10 +181,26 @@ kubectl delete -f deployment/deployment.yaml
 
 ```
 
-**Stop and remove monitoring containers:**
+**Grafana cleanup:**
 
 ```bash
-docker stop prometheus grafana
-docker rm prometheus grafana
+# Delete the Grafana service mapping
+kubectl delete -f grafana-service.yaml
 
+# Delete the Grafana deployment container resource
+kubectl delete -f grafana-deployment.yaml
+
+```
+
+**Prmoetheus:**
+
+```bash
+# Delete the Prometheus deployment and service components
+kubectl delete -f prometheus-deployment.yaml
+
+# Remove the Prometheus ConfigMap scraping configuration
+kubectl delete -f prometheus-config.yaml
+
+# Strip ClusterRoles and ServiceAccount RBAC permissions
+kubectl delete -f prometheus-roles.yaml
 ```
