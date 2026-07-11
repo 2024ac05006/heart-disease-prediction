@@ -8,7 +8,7 @@ import os
 def sample_data():
     # Sample raw data matching the Heart Disease dataset features
     return pd.DataFrame({
-        'age': [63, 37],
+
         'sex': [1, 1],
         'cp': [3, 2],
         'trestbps': [145, 130],
